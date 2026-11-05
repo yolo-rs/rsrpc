@@ -32,7 +32,7 @@ impl HttpMethod {
         }
     }
 
-    fn to_tokens(&self) -> TokenStream2 {
+    fn to_tokens(self) -> TokenStream2 {
         match self {
             Self::Get => quote!(::rsrpc::http::Method::GET),
             Self::Post => quote!(::rsrpc::http::Method::POST),
@@ -42,7 +42,7 @@ impl HttpMethod {
         }
     }
 
-    fn to_axum_method(&self) -> TokenStream2 {
+    fn to_axum_method(self) -> TokenStream2 {
         match self {
             Self::Get => quote!(::rsrpc::axum::routing::get),
             Self::Post => quote!(::rsrpc::axum::routing::post),
@@ -210,7 +210,7 @@ fn generate_service(trait_def: &ItemTrait, not_send: bool) -> syn::Result<TokenS
 
     // Generate request structs for each method
     let request_structs: Vec<TokenStream2> =
-        methods.iter().map(|m| generate_request_struct(m)).collect();
+        methods.iter().map(generate_request_struct).collect();
 
     // Generate method ID constants
     let method_ids: Vec<TokenStream2> = methods
@@ -414,10 +414,10 @@ fn parse_method(method: &TraitItemFn) -> syn::Result<MethodInfo> {
         .inputs
         .iter()
         .filter_map(|arg| {
-            if let FnArg::Typed(pat_type) = arg {
-                if let Pat::Ident(pat_ident) = &*pat_type.pat {
-                    return Some((pat_ident.ident.clone(), (*pat_type.ty).clone()));
-                }
+            if let FnArg::Typed(pat_type) = arg
+                && let Pat::Ident(pat_ident) = &*pat_type.pat
+            {
+                return Some((pat_ident.ident.clone(), (*pat_type.ty).clone()));
             }
             None
         })
